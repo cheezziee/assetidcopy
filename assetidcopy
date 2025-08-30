@@ -1,0 +1,108 @@
+-- Emote GUID → AssetId Gösterici GUI (Copy özelliğiyle)
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local HttpService = game:GetService("HttpService")
+
+-- Emote GUID listesi
+local Emotes = {
+    "073503e8e15eda49a447c48a9a695ffd",
+    "ee42a7287c98948adab77ad8fa169cc",
+    "42cb89f18bec574e8bd90bf917234b91",
+    "8317e41bd66f5a428c1fb665421752c9",
+    "b9a0f2c350f18649975c110bf4473506",
+    "4377fc5b546f00498da62a0c7b0dded0",
+    "99b945b74ccd9544ac5ede0068d01b38",
+    "466421a6852b7d4b89db750f7b1f2229",
+    "c6be2e11789e6f40af73b30a48f6148a",
+    "c0517ffe3de0884486d5068e2f4e9147",
+    "05ec855c5751a438634c3dc20e0540e"
+}
+
+-- GUI oluştur
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "EmoteIdGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 450, 0, 350)
+frame.Position = UDim2.new(0.5, -225, 0.5, -175)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,0,30)
+title.BackgroundColor3 = Color3.fromRGB(255,215,0)
+title.Text = "🎭 Emote Asset IDs"
+title.TextColor3 = Color3.fromRGB(0,0,0)
+title.Font = Enum.Font.FredokaOne
+title.TextScaled = true
+title.Parent = frame
+
+local scrollingFrame = Instance.new("ScrollingFrame")
+scrollingFrame.Size = UDim2.new(1,0,1,-60)
+scrollingFrame.Position = UDim2.new(0,0,0,30)
+scrollingFrame.CanvasSize = UDim2.new(0,0,0,0)
+scrollingFrame.BackgroundTransparency = 1
+scrollingFrame.ScrollBarThickness = 6
+scrollingFrame.Parent = frame
+
+local copyButton = Instance.new("TextButton")
+copyButton.Size = UDim2.new(1,0,0,30)
+copyButton.Position = UDim2.new(0,0,1,-30)
+copyButton.BackgroundColor3 = Color3.fromRGB(0,200,0)
+copyButton.Text = "📋 Copy IDs"
+copyButton.TextScaled = true
+copyButton.Font = Enum.Font.FredokaOne
+copyButton.TextColor3 = Color3.fromRGB(255,255,255)
+copyButton.Parent = frame
+
+-- AssetId çözüp GUI’ye yazdır
+local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+local allAssetIds = {}
+if humanoid then
+    local desc = humanoid:GetAppliedDescription()
+    local emoteInfo = desc:GetEmotes()
+    
+    local yPos = 5
+    for i,guid in ipairs(Emotes) do
+        local assetList = emoteInfo[guid]
+        local assetId = assetList and assetList[1] or "❌ Bulunamadı"
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, -10, 0, 25)
+        label.Position = UDim2.new(0, 5, 0, yPos)
+        label.BackgroundTransparency = 1
+        label.Text = i..". "..guid.." → "..tostring(assetId)
+        label.TextColor3 = Color3.fromRGB(255,255,255)
+        label.TextScaled = false
+        label.Font = Enum.Font.Code
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = scrollingFrame
+
+        if assetId ~= "❌ Bulunamadı" then
+            table.insert(allAssetIds, assetId)
+        end
+
+        yPos = yPos + 28
+        scrollingFrame.CanvasSize = UDim2.new(0,0,0,yPos)
+    end
+else
+    warn("❌ Humanoid bulunamadı, karakter spawn olmuş mu kontrol et.")
+end
+
+-- Panoya kopyalama
+copyButton.MouseButton1Click:Connect(function()
+    if setclipboard then
+        setclipboard(table.concat(allAssetIds, ", "))
+        copyButton.Text = "✅ Copied!"
+        task.wait(2)
+        copyButton.Text = "📋 Copy IDs"
+    else
+        copyButton.Text = "❌ setclipboard yok"
+        task.wait(2)
+        copyButton.Text = "📋 Copy IDs"
+    end
+end)
